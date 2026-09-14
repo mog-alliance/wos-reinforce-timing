@@ -55,27 +55,58 @@
   header p{margin:0;color:var(--muted);font-size:13.5px;}
 
   .card{
-    background:var(--card);
-    border:1px solid var(--card-edge);
-    border-radius:14px;
-    padding:18px 20px;
-    margin-bottom:16px;
-    box-shadow:0 8px 24px rgba(0,0,0,0.28);
+    background:rgba(255,255,255,0.015);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:12px;
+    padding:16px 18px;
+    margin-bottom:14px;
+    box-shadow:none;
   }
   .card h2{
-    font-size:14.5px;
-    margin:0 0 14px;
-    color:var(--accent-bright);
+    font-size:13px;
+    margin:0 0 12px;
+    color:var(--muted);
+    font-weight:600;
+    letter-spacing:0.03em;
     display:flex;
     align-items:center;
     gap:8px;
   }
   .card h2::before{
     content:"";
-    width:4px;height:14px;
+    width:3px;height:12px;
     border-radius:2px;
-    background:linear-gradient(180deg,var(--accent),var(--accent2));
+    background:rgba(255,255,255,0.18);
     display:inline-block;
+  }
+
+  .card-result{
+    background:var(--card);
+    border:1px solid var(--accent);
+    border-radius:16px;
+    padding:20px 20px 18px;
+    margin-bottom:16px;
+    box-shadow:0 0 0 1px rgba(34,211,238,0.15), 0 12px 32px rgba(0,0,0,0.4), 0 0 40px rgba(34,211,238,0.12);
+    position:relative;
+  }
+  .card-result::before{
+    content:"";
+    position:absolute;
+    top:0;left:16px;right:16px;
+    height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent-bright),var(--accent2),transparent);
+    border-radius:2px;
+  }
+  .card-result h2{
+    font-size:15.5px;
+    margin:0 0 14px;
+    color:var(--accent-bright);
+    font-weight:700;
+    letter-spacing:0.02em;
+  }
+  .card-result h2::before{
+    width:4px;height:15px;
+    background:linear-gradient(180deg,var(--accent),var(--accent2));
   }
 
   .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
@@ -178,26 +209,24 @@
       </div>
     </div>
     <div class="field">
-      <label>集結開始時刻</label>
+      <label>集結開始時刻(任意・わかる場合のみ)</label>
       <div class="timeinput">
         <input type="time" id="baseTime" step="1" style="width:110px;">
         <button class="action" style="padding:6px 12px;font-size:12px;" onclick="setBaseTimeNow()">今</button>
         <button class="action" style="padding:6px 12px;font-size:12px;" onclick="clearBaseTime()">クリア</button>
       </div>
-      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-top:6px;cursor:pointer;">
-        <input type="checkbox" id="showClockToggle" checked onchange="renderResults()" style="accent-color:var(--accent);width:13px;height:13px;">
-        結果に実時刻を表示する
-      </label>
-      <div id="impactPreview" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
     </div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);cursor:pointer;">
+      <input type="checkbox" id="showClockToggle" onchange="renderResults()" style="accent-color:var(--accent);width:13px;height:13px;">
+      集結開始時刻をもとに、結果に実時計の時刻も表示する
+    </label>
   </div>
 
   <div class="card">
     <h2>差し込み部隊(複数登録可)</h2>
     <div style="display:flex;gap:6px;padding:0 2px 4px;font-size:10.5px;color:var(--muted);">
       <div style="flex:1;">名前</div>
-      <div style="width:50px;text-align:center;">行軍</div>
-      <div style="width:44px;text-align:center;">個人差</div>
+      <div style="width:50px;text-align:center;">行軍(秒)</div>
       <div style="width:20px;"></div>
     </div>
     <div id="unitList"></div>
@@ -206,8 +235,9 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card card-result">
     <h2>出発タイミング</h2>
+    <div id="impactPreview" style="font-size:13px;color:var(--accent-bright);font-weight:600;padding:8px 10px;margin-bottom:10px;background:rgba(34,211,238,0.07);border-radius:8px;"></div>
     <div id="resultArea"></div>
     <div class="modebar" style="margin-top:12px;">
       <button class="action" onclick="copyResults()">結果をコピー</button>
@@ -275,9 +305,9 @@ function fmtClock(ms){
 
 function getVal(id){ return parseInt(document.getElementById(id).value || '0', 10); }
 
-function addUnit(name, marchSec, marginSec){
+function addUnit(name, marchSec){
   const autoName = name ?? `部隊${units.length + 1}`;
-  units.push({id: unitIdSeq++, name: autoName, marchSec: marchSec ?? 25, marginSec: marginSec ?? 0});
+  units.push({id: unitIdSeq++, name: autoName, marchSec: marchSec ?? 25});
   renderUnitList();
   renderResults();
 }
@@ -293,7 +323,6 @@ function updateUnit(id, key, val){
   if(!u) return;
   if(key === 'name'){ u.name = val; }
   else if(key === 'march'){ u.marchSec = Math.max(0, parseInt(val || '0', 10)); }
-  else if(key === 'margin'){ u.marginSec = parseInt(val || '0', 10); }
   renderResults();
 }
 
@@ -309,8 +338,6 @@ function renderUnitList(){
         style="flex:1;min-width:0;background:#0b1424;border:1px solid rgba(255,255,255,0.08);color:var(--text);padding:5px 9px;border-radius:7px;font-size:13px;">
       <input type="number" min="0" value="${u.marchSec}" oninput="updateUnit(${u.id},'march',this.value)"
         style="width:50px;background:#0b1424;border:1px solid rgba(255,255,255,0.08);color:var(--text);padding:5px 5px;border-radius:7px;font-size:13.5px;font-variant-numeric:tabular-nums;text-align:center;">
-      <input type="number" value="${u.marginSec}" oninput="updateUnit(${u.id},'margin',this.value)" title="回線ラグ等の個人差(秒)"
-        style="width:44px;background:#0b1424;border:1px solid rgba(255,255,255,0.08);color:var(--accent-bright);padding:5px 5px;border-radius:7px;font-size:13.5px;font-variant-numeric:tabular-nums;text-align:center;">
       <button onclick="removeUnit(${u.id})" style="background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:2px 6px;line-height:1;">×</button>
     </div>
   `).join('');
@@ -329,15 +356,22 @@ function renderResults(){
   const rallySec = selectedRally * 60;
   const el = document.getElementById('resultArea');
 
-  // 着弾予定時刻のプレビュー(部隊登録の有無に関わらず表示)
+  // 着弾予定時刻のプレビュー(部隊登録の有無に関わらず表示)。
+  // 集結開始時刻が設定されている場合のみ、実際の時計と連動したライブカウントダウンを表示する。
+  // 未設定の場合は根拠になる基準時刻がないため、入力値どおりの静的な残り時間だけを表示する。
   const previewEl = document.getElementById('impactPreview');
   const nominalImpactSec = rallySec + enemyMarch;
   const baseMsForImpact = getBaseTimeMs();
-  if(baseMsForImpact !== null){
+  const showClockForPreview = document.getElementById('showClockToggle').checked;
+  if(baseMsForImpact !== null && showClockForPreview){
     const impactAtMs = baseMsForImpact + nominalImpactSec * 1000;
-    previewEl.textContent = `敵の着弾予定時刻: ${fmtClock(impactAtMs)}(あと${fmtDuration(nominalImpactSec)})`;
+    const remainSec = (impactAtMs - Date.now()) / 1000;
+    const remainText = remainSec >= 0 ? `あと${fmtDuration(remainSec)}` : `${fmtDuration(remainSec)}経過`;
+    previewEl.style.display = 'block';
+    previewEl.textContent = `敵の着弾予定時刻　${fmtClock(impactAtMs)}(${remainText})`;
   } else {
-    previewEl.textContent = `敵の着弾まで: ${fmtDuration(nominalImpactSec)}(集結開始時刻を入れると時刻も表示されます)`;
+    previewEl.style.display = 'none';
+    previewEl.textContent = '';
   }
 
   if(units.length === 0){
@@ -346,7 +380,7 @@ function renderResults(){
   }
 
   // departRelative: 集結完了を基準(0)とした出発タイミング。値が小さい(マイナスに大きい)ほど早く出発する必要がある。
-  const withDepart = units.map(u => ({ u, departRelative: enemyMarch - u.marchSec - u.marginSec }));
+  const withDepart = units.map(u => ({ u, departRelative: enemyMarch - u.marchSec }));
   const ordered = [...withDepart].sort((a, b) => a.departRelative - b.departRelative);
 
   el.innerHTML = ordered.map(({u, departRelative}, i) => {
@@ -358,7 +392,7 @@ function renderResults(){
     } else {
       // 集結完了後(行軍フェーズ中)に出発する場合は、敵の行軍カウントダウン基準で表現する。
       // マージン分だけ早く出発するので、その時点の敵の行軍残りは「自分の行軍時間+マージン」になる。
-      answer = `敵の行軍残り ${fmtDuration(u.marchSec + u.marginSec)}`;
+      answer = `敵の行軍残り ${fmtDuration(u.marchSec)}`;
     }
     let warnInline = '';
     if(departRelative < 0 && Math.abs(departRelative) > rallySec){
@@ -372,7 +406,7 @@ function renderResults(){
     const showClock = document.getElementById('showClockToggle').checked;
     if(baseMs !== null && showClock){
       const nominalImpactSec = rallySec + enemyMarch;
-      const departAtMs = baseMs + (nominalImpactSec - u.marchSec - u.marginSec) * 1000;
+      const departAtMs = baseMs + (nominalImpactSec - u.marchSec) * 1000;
       clockLine = `<div style="font-size:11px;color:var(--muted);">${fmtClock(departAtMs)}</div>`;
     }
 
@@ -392,11 +426,21 @@ function renderResults(){
 function buildResultText(){
   const enemyMarch = getVal('enemySec');
   const rallySec = selectedRally * 60;
-  const lines = [`【差し込みタイミング】集結${selectedRally}分 / 敵行軍${enemyMarch}秒`];
-  const withDepart = units.map(u => ({ u, departRelative: enemyMarch - u.marchSec - u.marginSec }));
-  const ordered = [...withDepart].sort((a, b) => a.departRelative - b.departRelative);
+  const nominalImpactSec = rallySec + enemyMarch;
   const baseMs = getBaseTimeMs();
   const showClock = document.getElementById('showClockToggle').checked;
+
+  const infoLines = ['【敵の情報】'];
+  infoLines.push(`集結セット：${selectedRally}分／敵行軍：${enemyMarch}秒`);
+  if(baseMs !== null && showClock){
+    const impactAtMs = baseMs + nominalImpactSec * 1000;
+    const remainSec = (impactAtMs - Date.now()) / 1000;
+    infoLines.push(`敵の着弾予定時刻：${fmtClock(impactAtMs)}(あと${fmtDuration(Math.max(remainSec,0))})`);
+  }
+
+  const timingLines = ['', '【差し込みタイミング】'];
+  const withDepart = units.map(u => ({ u, departRelative: enemyMarch - u.marchSec }));
+  const ordered = [...withDepart].sort((a, b) => a.departRelative - b.departRelative);
   ordered.forEach(({u, departRelative}) => {
     const label = u.name.trim() ? u.name.trim() : '(名称未設定)';
     let answer;
@@ -408,16 +452,16 @@ function buildResultText(){
     } else if(departRelative === 0){
       answer = '集結完了時';
     } else {
-      answer = `敵の行軍残り${fmtDuration(u.marchSec + u.marginSec)}`;
+      answer = `敵の行軍残り${fmtDuration(u.marchSec)}`;
     }
     if(baseMs !== null && showClock){
-      const nominalImpactSec = rallySec + enemyMarch;
-      const departAtMs = baseMs + (nominalImpactSec - u.marchSec - u.marginSec) * 1000;
+      const departAtMs = baseMs + (nominalImpactSec - u.marchSec) * 1000;
       answer += `　${fmtClock(departAtMs)}`;
     }
-    lines.push(`${label}：${answer}`);
+    timingLines.push(`${label}：${answer}`);
   });
-  return lines.join('\n');
+
+  return [...infoLines, ...timingLines].join('\n');
 }
 
 function copyResults(){
@@ -448,9 +492,9 @@ function toggleChangelog(){
 
 renderUnitList();
 addUnit('部隊1', 25);
-document.querySelectorAll('#enemySec,#baseTime').forEach(elm => {
-  elm.addEventListener('input', renderResults);
-});
+document.getElementById('enemySec').addEventListener('input', renderResults);
+document.getElementById('baseTime').addEventListener('input', renderResults);
+setInterval(renderResults, 1000);
 </script>
 </body>
 </html>
