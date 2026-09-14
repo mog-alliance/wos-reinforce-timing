@@ -180,10 +180,14 @@
   <div class="card">
     <h2>出発タイミング</h2>
     <div id="resultArea"></div>
+    <div class="modebar" style="margin-top:12px;">
+      <button class="action" onclick="copyResults()">結果をコピー</button>
+    </div>
+    <textarea id="copyArea" readonly style="width:100%;margin-top:10px;display:none;background:#0b1424;border:1px solid rgba(255,255,255,0.08);color:var(--text);border-radius:8px;padding:10px;font-size:13px;line-height:1.6;"></textarea>
   </div>
 
   <div class="note">
-    <b>見方</b>: 集結完了前に出発すべき場合は「集結完了のXX秒前」、集結完了後(=敵の行軍が始まってから)に出発すべき場合は「敵の行軍残りXX秒」で表示します。後者は同着狙いだと必ず自分の行軍時間と同じ値になります(=敵の行軍カウントダウンが自分の行軍時間と同じ数値になった瞬間に出発すればOK)。<br><br>
+    <b>見方</b>: 出発すべきタイミングを、実際にゲーム画面で見ているカウントダウンと同じ形式で表示します。集結完了前に出発すべき場合は「集結残りXX秒」になった瞬間、集結完了後(=行軍が始まってから)に出発すべき場合は「敵の行軍残りXX秒」になった瞬間が出発タイミングです。後者は同着狙いだと必ず自分の行軍時間と同じ値になります。<br><br>
     <b>注意</b>: 通信ラグや実際の行軍時間の誤差は考慮していません。数秒の余裕を見て運用してください。
   </div>
 </div>
@@ -263,7 +267,7 @@ function renderResults(){
     const departRelative = enemyMarch - u.marchSec;
     let answer, tone = '';
     if(departRelative < 0){
-      answer = `集結完了の${fmtDuration(departRelative)}前`;
+      answer = `集結残り ${fmtDuration(Math.abs(departRelative))}`;
     } else if(departRelative === 0){
       answer = '集結完了時';
     } else {
@@ -287,6 +291,50 @@ function renderResults(){
       </div>
     `;
   }).join('');
+}
+
+function buildResultText(){
+  const enemyMarch = getVal('enemySec');
+  const rallySec = selectedRally * 60;
+  const lines = [`【差し込みタイミング】集結${selectedRally}分 / 敵行軍${enemyMarch}秒`];
+  units.forEach(u => {
+    const departRelative = enemyMarch - u.marchSec;
+    const label = u.name.trim() ? u.name.trim() : '(名称未設定)';
+    let answer;
+    if(departRelative < 0){
+      answer = `集結残り${fmtDuration(Math.abs(departRelative))}`;
+      if(Math.abs(departRelative) > rallySec){
+        answer += `(この集結時間では間に合いません)`;
+      }
+    } else if(departRelative === 0){
+      answer = '集結完了時';
+    } else {
+      answer = `敵の行軍残り${fmtDuration(u.marchSec)}`;
+    }
+    lines.push(`${label}：${answer}`);
+  });
+  return lines.join('\n');
+}
+
+function copyResults(){
+  if(units.length === 0){ return; }
+  const text = buildResultText();
+  const area = document.getElementById('copyArea');
+
+  const showFallback = () => {
+    area.style.display = 'block';
+    area.value = text;
+    area.focus();
+    area.select();
+  };
+
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(() => {
+      area.style.display = 'none';
+    }).catch(showFallback);
+  } else {
+    showFallback();
+  }
 }
 
 renderUnitList();
