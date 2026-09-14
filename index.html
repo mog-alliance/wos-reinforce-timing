@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>WOS 差し込み時刻計算 v1.0</title>
+<title>WOS 差し込み時刻計算 v1.3</title>
 <style>
   :root{
     --bg:#070b14;
@@ -63,10 +63,10 @@
     box-shadow:none;
   }
   .card h2{
-    font-size:13px;
+    font-size:13.5px;
     margin:0 0 12px;
-    color:var(--muted);
-    font-weight:600;
+    color:var(--text);
+    font-weight:700;
     letter-spacing:0.03em;
     display:flex;
     align-items:center;
@@ -188,7 +188,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>WOS 差し込み時刻計算<span class="version">v1.0</span></h1>
+    <h1>WOS 差し込み時刻計算<span class="version">v1.3</span></h1>
     <p>敵の集結完了を基準に、差し込み部隊を何秒前(または後)に出発させればいいかを計算します。</p>
   </header>
 
@@ -208,18 +208,29 @@
         <input type="number" id="enemySec" min="0" value="20"><span>秒</span>
       </div>
     </div>
-    <div class="field">
-      <label>集結開始時刻(任意・わかる場合のみ)</label>
-      <div class="timeinput">
-        <input type="time" id="baseTime" step="1" style="width:110px;">
-        <button class="action" style="padding:6px 12px;font-size:12px;" onclick="setBaseTimeNow()">今</button>
-        <button class="action" style="padding:6px 12px;font-size:12px;" onclick="clearBaseTime()">クリア</button>
+  </div>
+
+  <div class="card">
+    <button onclick="toggleRealtime()" id="realtimeToggleBtn" style="width:100%;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:0;">
+      <span>実時刻を使う(任意)</span>
+      <span id="realtimeToggleIcon" style="color:var(--muted);">▸</span>
+    </button>
+    <div id="realtimeContent" style="display:none;margin-top:14px;">
+      <div class="field">
+        <label>集結開始時刻</label>
+        <div class="timeinput">
+          <input type="time" id="baseTime" step="1" style="width:110px;">
+          <button class="action" style="padding:6px 12px;font-size:12px;" onclick="setBaseTimeNow()">今</button>
+          <button class="action" style="padding:6px 12px;font-size:12px;" onclick="setBaseTimeMinusOneMin()">1分補正</button>
+          <button class="action" style="padding:6px 12px;font-size:12px;" onclick="clearBaseTime()">クリア</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">「1分補正」＝集結からちょうど1分後に押すと、自動で1分引いた時刻が入ります。1分以上ズレる場合は直接入力してください。</div>
       </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);cursor:pointer;">
+        <input type="checkbox" id="showClockToggle" onchange="renderResults()" style="accent-color:var(--accent);width:13px;height:13px;">
+        結果に実時計の時刻も表示する
+      </label>
     </div>
-    <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);cursor:pointer;">
-      <input type="checkbox" id="showClockToggle" onchange="renderResults()" style="accent-color:var(--accent);width:13px;height:13px;">
-      集結開始時刻をもとに、結果に実時計の時刻も表示する
-    </label>
   </div>
 
   <div class="card">
@@ -254,6 +265,9 @@
     <button onclick="toggleChangelog()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline;padding:0;margin-bottom:10px;">変更履歴</button>
     <div id="changelog" style="display:none;text-align:left;max-width:360px;margin:0 auto 14px;background:#0b1424;border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:12px 14px;font-size:11.5px;line-height:1.8;color:var(--muted);">
       <div><b style="color:var(--text);">v1.0</b>：集結セット(1/3/5分)＋敵行軍時間から、差し込み部隊(複数登録可・名前付け可)の出発タイミングを「集結残り/行軍残り○秒」形式で算出。結果コピー機能を追加。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.1</b>：出発順への自動並び替え(番号表示)、部隊ごとの個別入力整理、集結開始時刻の入力(任意)による実時計時刻・着弾予定時刻の表示(チェックボックスで表示可否を制御)、コピー結果を「敵の情報」「差し込みタイミング」の2セクションに分離、入力カードと結果カードの見た目にメリハリをつけるデザイン調整を実施。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.2</b>：集結からちょうど1分後に押すと自動で1分引いた時刻をセットする「1分補正」ボタンを追加(手入力は1分以上ズレる場合用にそのまま残置)。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.3</b>：実時刻関連の入力(集結開始時刻・今/1分補正/クリア・チェックボックス)を「敵の情報」カードから分離し、普段は畳んでおける折りたたみセクションに整理。UI全体の見通しを改善。</div>
     </div>
     made by <span style="color:var(--accent-bright);">MOG</span>
   </footer>
@@ -277,6 +291,15 @@ function setBaseTimeNow(){
   const hh = String(now.getHours()).padStart(2,'0');
   const mm = String(now.getMinutes()).padStart(2,'0');
   const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('baseTime').value = `${hh}:${mm}:${ss}`;
+  renderResults();
+}
+
+function setBaseTimeMinusOneMin(){
+  const adjusted = new Date(Date.now() - 60 * 1000);
+  const hh = String(adjusted.getHours()).padStart(2,'0');
+  const mm = String(adjusted.getMinutes()).padStart(2,'0');
+  const ss = String(adjusted.getSeconds()).padStart(2,'0');
   document.getElementById('baseTime').value = `${hh}:${mm}:${ss}`;
   renderResults();
 }
@@ -488,6 +511,14 @@ function copyResults(){
 function toggleChangelog(){
   const el = document.getElementById('changelog');
   el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleRealtime(){
+  const content = document.getElementById('realtimeContent');
+  const icon = document.getElementById('realtimeToggleIcon');
+  const isOpen = content.style.display !== 'none';
+  content.style.display = isOpen ? 'none' : 'block';
+  icon.textContent = isOpen ? '▸' : '▾';
 }
 
 renderUnitList();
