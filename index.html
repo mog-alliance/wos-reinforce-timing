@@ -183,8 +183,7 @@
   </div>
 
   <div class="note">
-    <b>計算式</b>: 出発タイミング(集結完了基準) = 敵の行軍時間 − 自分の行軍時間(同着狙い)<br>
-    結果がマイナスなら「集結完了の何秒前」、プラスなら「集結完了の何秒後」に出発する、という意味になります。<br><br>
+    <b>見方</b>: 集結完了前に出発すべき場合は「集結完了のXX秒前」、集結完了後(=敵の行軍が始まってから)に出発すべき場合は「敵の行軍残りXX秒」で表示します。後者は同着狙いだと必ず自分の行軍時間と同じ値になります(=敵の行軍カウントダウンが自分の行軍時間と同じ数値になった瞬間に出発すればOK)。<br><br>
     <b>注意</b>: 通信ラグや実際の行軍時間の誤差は考慮していません。数秒の余裕を見て運用してください。
   </div>
 </div>
@@ -265,10 +264,12 @@ function renderResults(){
     let answer, tone = '';
     if(departRelative < 0){
       answer = `集結完了の${fmtDuration(departRelative)}前`;
-    } else if(departRelative > 0){
-      answer = `集結完了の${fmtDuration(departRelative)}後`;
+    } else if(departRelative === 0){
+      answer = '集結完了時';
     } else {
-      answer = '集結完了と同時';
+      // 集結完了後(行軍フェーズ中)に出発する場合は、敵の行軍カウントダウン基準で表現する。
+      // 同着狙いだと、出発すべき瞬間の敵の行軍残り時間は必ず自分の行軍時間と一致する。
+      answer = `敵の行軍残り ${fmtDuration(u.marchSec)}`;
     }
     let warn = '';
     if(departRelative < 0 && Math.abs(departRelative) > rallySec){
