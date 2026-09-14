@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>WOS 差し込み時刻計算 v1.7</title>
+<title>WOS 差し込み時刻計算 v1.11</title>
 <style>
   :root{
     --bg:#070b14;
@@ -133,7 +133,7 @@
   input[type=number]:focus{outline:none;border-color:var(--accent);}
   .timeinput span{color:var(--muted);font-size:12px;}
 
-  .modebar{display:flex;gap:8px;}
+  .modebar{display:flex;gap:8px;flex-wrap:wrap;}
   .modebtn{
     flex:1;
     padding:10px 10px;
@@ -194,13 +194,9 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>WOS 差し込み時刻計算<span class="version">v1.7</span></h1>
+    <h1>WOS 差し込み時刻計算<span class="version">v1.11</span></h1>
     <p>敵の集結完了を基準に、差し込み部隊を何秒前(または後)に出発させればいいかを計算します。</p>
   </header>
-
-  <div style="display:flex;justify-content:flex-end;margin-top:-6px;margin-bottom:14px;">
-    <button id="timeModeBtn" onclick="toggleTimeMode()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-size:11px;padding:5px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;">現地時刻</button>
-  </div>
 
   <div class="card">
     <h2>敵の情報</h2>
@@ -226,6 +222,10 @@
       <span id="realtimeToggleIcon" style="color:var(--muted);">▸</span>
     </button>
     <div id="realtimeContent" style="display:none;margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-size:12px;color:var(--muted);">時刻の基準</div>
+        <button id="timeModeBtn" onclick="toggleTimeMode()" title="タップで現地時刻⇄UTCを切り替え" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-size:11px;padding:5px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;">現地時刻</button>
+      </div>
       <div class="field">
         <label>集結開始時刻　<span id="baseTimeModeLabel" style="color:var(--accent-bright);">(現地時刻)</span></label>
         <div class="timeinput">
@@ -236,15 +236,18 @@
           <input type="number" id="baseSec" min="0" max="59" placeholder="秒" style="width:52px;">
         </div>
         <div class="modebar" style="margin-top:8px;">
-          <button class="action" style="padding:6px 12px;font-size:12px;flex:none;" onclick="setBaseTimeNow()" title="集結が始まった瞬間に押す">今</button>
-          <button class="action" style="padding:6px 12px;font-size:12px;flex:none;" onclick="setBaseTimeMinusOneMin()" title="集結からちょうど1分後に押す(自動で1分引く)">1分補正</button>
+          <button class="action" style="padding:6px 12px;font-size:12px;flex:none;" onclick="setBaseTimeNow()" title="現在の時刻をそのまま入力する">現在時刻</button>
+          <button class="action" style="padding:6px 12px;font-size:12px;flex:none;" onclick="setBaseTimeMinusOneMin()" title="集結開始からちょうど1分後に押す">1分補正</button>
           <button class="action" style="padding:6px 12px;font-size:12px;flex:none;" onclick="clearBaseTime()">クリア</button>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;">今＝集結が始まった瞬間に押す／1分補正＝集結の1分後に押す(自動で1分マイナス)。1分以上ズレる場合は直接入力。</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.8;">
+          現在時刻　→　今の時刻をそのまま入力するボタン<br>
+          1分補正　→　集結開始からちょうど1分後に押すと、自動で1分引いた時刻(＝集結開始時刻)が入るボタン
+        </div>
       </div>
       <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);cursor:pointer;">
         <input type="checkbox" id="showClockToggle" onchange="renderResults()" style="accent-color:var(--accent);width:13px;height:13px;">
-        結果に実時計の時刻も表示する
+        結果にも実際の時刻を表示する
       </label>
     </div>
   </div>
@@ -265,6 +268,11 @@
   <div class="card card-result">
     <h2>出発タイミング</h2>
     <div id="impactPreview" style="font-size:13px;color:var(--accent-bright);font-weight:600;padding:8px 10px;margin-bottom:10px;background:rgba(34,211,238,0.07);border-radius:8px;"></div>
+    <div style="display:flex;gap:8px;padding:0 2px 6px;font-size:10.5px;color:var(--muted);">
+      <div style="width:18px;text-align:right;">#</div>
+      <div style="flex:1;">名前</div>
+      <div>出発タイミング</div>
+    </div>
     <div id="resultArea"></div>
     <div class="modebar" style="margin-top:12px;">
       <button class="action" onclick="copyResults()">結果をコピー</button>
@@ -273,8 +281,12 @@
   </div>
 
   <div class="note">
-    <b>見方</b>: 出発すべきタイミングを、実際にゲーム画面で見ているカウントダウンと同じ形式で表示します。集結完了前に出発すべき場合は「集結残りXX秒」になった瞬間、集結完了後(=行軍が始まってから)に出発すべき場合は「敵の行軍残りXX秒」になった瞬間が出発タイミングです。後者は同着狙いだと必ず自分の行軍時間と同じ値になります。<br><br>
-    <b>注意</b>: 通信ラグや実際の行軍時間の誤差は考慮していません。数秒の余裕を見て運用してください。
+    <b>見方</b><br>
+    ・「集結残りXX秒」→ 集結完了<u>前</u>に、この秒数になったら出発<br>
+    ・「敵の行軍残りXX秒」→ 集結完了<u>後</u>(敵が行軍中)に、この秒数になったら出発<br>
+    ・同着狙いなら、後者の数字は自分の行軍時間と必ず同じになります<br><br>
+    <b>注意</b><br>
+    通信ラグや行軍時間の誤差は考慮していません。数秒の余裕を見て運用してください。
   </div>
 
   <footer style="margin-top:32px;text-align:center;font-size:11.5px;color:var(--muted);letter-spacing:0.06em;">
@@ -288,6 +300,10 @@
       <div style="margin-top:8px;"><b style="color:var(--text);">v1.5</b>：ヘッダー直下に「現地時刻／UTC」の切り替えを追加。集結開始時刻の入力、着弾予定時刻、各部隊の出発時刻、コピー結果まで、時刻表示すべてに反映される。</div>
       <div style="margin-top:8px;"><b style="color:var(--text);">v1.6</b>：現地時刻/UTCの切り替えが折り返して見づらかったため、1/3/5分と同格の大きなボタンから、右上の小さな1個のトグルボタンに変更(補助設定として控えめな見た目に調整)。</div>
       <div style="margin-top:8px;"><b style="color:var(--text);">v1.7</b>：数値入力のネイティブ矢印(スピナー)が狭い枠内で数字を圧迫していたため、全ての数値入力で矢印を非表示にし、集結開始時刻の時/分/秒欄の幅も拡大して見やすく修正。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.8</b>：UI全体を整理。今/1分補正の説明・一番下の「見方」を1文の詰め込みから読みやすい行分割に変更、結果欄に「#/名前/出発タイミング」の見出し行を追加、時刻切替ボタンにホバー説明を追加、文言を微調整。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.9</b>：「今」ボタンを「現在時刻」に改称し、機能説明(何をするボタンか)を明記。「1分補正」は名称・機能そのまま。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.10</b>：「1分補正」の説明を、単なる機能説明から「集結開始からちょうど1分後に押す」という使うタイミングがわかる説明に修正(このボタンは使用場面とセットでないと意味が伝わらないため)。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.11</b>：現地時刻/UTC切り替えを、意味を持たない独立した場所(ヘッダー直下)から、それが影響する「実時刻を使う」セクションの中に移動。情報の関連性を整理。</div>
     </div>
     made by <span style="color:var(--accent-bright);">MOG</span>
   </footer>
