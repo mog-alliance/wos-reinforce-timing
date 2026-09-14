@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>WOS 差し込み時刻計算 v1.3</title>
+<title>WOS 差し込み時刻計算 v1.7</title>
 <style>
   :root{
     --bg:#070b14;
@@ -123,6 +123,12 @@
     font-size:15px;
     font-variant-numeric:tabular-nums;
     text-align:center;
+    -moz-appearance:textfield;
+  }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
   }
   input[type=number]:focus{outline:none;border-color:var(--accent);}
   .timeinput span{color:var(--muted);font-size:12px;}
@@ -188,9 +194,13 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>WOS 差し込み時刻計算<span class="version">v1.3</span></h1>
+    <h1>WOS 差し込み時刻計算<span class="version">v1.7</span></h1>
     <p>敵の集結完了を基準に、差し込み部隊を何秒前(または後)に出発させればいいかを計算します。</p>
   </header>
+
+  <div style="display:flex;justify-content:flex-end;margin-top:-6px;margin-bottom:14px;">
+    <button id="timeModeBtn" onclick="toggleTimeMode()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-size:11px;padding:5px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;">現地時刻</button>
+  </div>
 
   <div class="card">
     <h2>敵の情報</h2>
@@ -217,14 +227,20 @@
     </button>
     <div id="realtimeContent" style="display:none;margin-top:14px;">
       <div class="field">
-        <label>集結開始時刻</label>
+        <label>集結開始時刻　<span id="baseTimeModeLabel" style="color:var(--accent-bright);">(現地時刻)</span></label>
         <div class="timeinput">
-          <input type="time" id="baseTime" step="1" style="width:110px;">
-          <button class="action" style="padding:6px 12px;font-size:12px;" onclick="setBaseTimeNow()">今</button>
-          <button class="action" style="padding:6px 12px;font-size:12px;" onclick="setBaseTimeMinusOneMin()">1分補正</button>
-          <button class="action" style="padding:6px 12px;font-size:12px;" onclick="clearBaseTime()">クリア</button>
+          <input type="number" id="baseHour" min="0" max="23" placeholder="時" style="width:52px;">
+          <span>:</span>
+          <input type="number" id="baseMin" min="0" max="59" placeholder="分" style="width:52px;">
+          <span>:</span>
+          <input type="number" id="baseSec" min="0" max="59" placeholder="秒" style="width:52px;">
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;">「1分補正」＝集結からちょうど1分後に押すと、自動で1分引いた時刻が入ります。1分以上ズレる場合は直接入力してください。</div>
+        <div class="modebar" style="margin-top:8px;">
+          <button class="action" style="padding:6px 12px;font-size:12px;flex:none;" onclick="setBaseTimeNow()" title="集結が始まった瞬間に押す">今</button>
+          <button class="action" style="padding:6px 12px;font-size:12px;flex:none;" onclick="setBaseTimeMinusOneMin()" title="集結からちょうど1分後に押す(自動で1分引く)">1分補正</button>
+          <button class="action" style="padding:6px 12px;font-size:12px;flex:none;" onclick="clearBaseTime()">クリア</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;">今＝集結が始まった瞬間に押す／1分補正＝集結の1分後に押す(自動で1分マイナス)。1分以上ズレる場合は直接入力。</div>
       </div>
       <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);cursor:pointer;">
         <input type="checkbox" id="showClockToggle" onchange="renderResults()" style="accent-color:var(--accent);width:13px;height:13px;">
@@ -268,6 +284,10 @@
       <div style="margin-top:8px;"><b style="color:var(--text);">v1.1</b>：出発順への自動並び替え(番号表示)、部隊ごとの個別入力整理、集結開始時刻の入力(任意)による実時計時刻・着弾予定時刻の表示(チェックボックスで表示可否を制御)、コピー結果を「敵の情報」「差し込みタイミング」の2セクションに分離、入力カードと結果カードの見た目にメリハリをつけるデザイン調整を実施。</div>
       <div style="margin-top:8px;"><b style="color:var(--text);">v1.2</b>：集結からちょうど1分後に押すと自動で1分引いた時刻をセットする「1分補正」ボタンを追加(手入力は1分以上ズレる場合用にそのまま残置)。</div>
       <div style="margin-top:8px;"><b style="color:var(--text);">v1.3</b>：実時刻関連の入力(集結開始時刻・今/1分補正/クリア・チェックボックス)を「敵の情報」カードから分離し、普段は畳んでおける折りたたみセクションに整理。UI全体の見通しを改善。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.4</b>：集結開始時刻の入力を、スマホで秒が表示されない/崩れる問題があったネイティブ時刻ピッカーから、時・分・秒の個別数値入力に変更。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.5</b>：ヘッダー直下に「現地時刻／UTC」の切り替えを追加。集結開始時刻の入力、着弾予定時刻、各部隊の出発時刻、コピー結果まで、時刻表示すべてに反映される。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.6</b>：現地時刻/UTCの切り替えが折り返して見づらかったため、1/3/5分と同格の大きなボタンから、右上の小さな1個のトグルボタンに変更(補助設定として控えめな見た目に調整)。</div>
+      <div style="margin-top:8px;"><b style="color:var(--text);">v1.7</b>：数値入力のネイティブ矢印(スピナー)が狭い枠内で数字を圧迫していたため、全ての数値入力で矢印を非表示にし、集結開始時刻の時/分/秒欄の幅も拡大して見やすく修正。</div>
     </div>
     made by <span style="color:var(--accent-bright);">MOG</span>
   </footer>
@@ -277,6 +297,14 @@
 let selectedRally = 3; // minutes
 let units = []; // {id, name, marchSec}
 let unitIdSeq = 1;
+let timeMode = 'local'; // 'local' または 'utc'。集結開始時刻の入力・全ての時刻表示の基準になる。
+
+function toggleTimeMode(){
+  timeMode = timeMode === 'local' ? 'utc' : 'local';
+  document.getElementById('timeModeBtn').textContent = timeMode === 'local' ? '現地時刻' : 'UTC';
+  document.getElementById('baseTimeModeLabel').textContent = timeMode === 'local' ? '(現地時刻)' : '(UTC)';
+  renderResults();
+}
 
 function setRally(minutes){
   selectedRally = minutes;
@@ -288,42 +316,56 @@ function setRally(minutes){
 
 function setBaseTimeNow(){
   const now = new Date();
-  const hh = String(now.getHours()).padStart(2,'0');
-  const mm = String(now.getMinutes()).padStart(2,'0');
-  const ss = String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('baseTime').value = `${hh}:${mm}:${ss}`;
+  const h = timeMode === 'local' ? now.getHours() : now.getUTCHours();
+  const m = timeMode === 'local' ? now.getMinutes() : now.getUTCMinutes();
+  const s = timeMode === 'local' ? now.getSeconds() : now.getUTCSeconds();
+  document.getElementById('baseHour').value = h;
+  document.getElementById('baseMin').value = m;
+  document.getElementById('baseSec').value = s;
   renderResults();
 }
 
 function setBaseTimeMinusOneMin(){
   const adjusted = new Date(Date.now() - 60 * 1000);
-  const hh = String(adjusted.getHours()).padStart(2,'0');
-  const mm = String(adjusted.getMinutes()).padStart(2,'0');
-  const ss = String(adjusted.getSeconds()).padStart(2,'0');
-  document.getElementById('baseTime').value = `${hh}:${mm}:${ss}`;
+  const h = timeMode === 'local' ? adjusted.getHours() : adjusted.getUTCHours();
+  const m = timeMode === 'local' ? adjusted.getMinutes() : adjusted.getUTCMinutes();
+  const s = timeMode === 'local' ? adjusted.getSeconds() : adjusted.getUTCSeconds();
+  document.getElementById('baseHour').value = h;
+  document.getElementById('baseMin').value = m;
+  document.getElementById('baseSec').value = s;
   renderResults();
 }
 
 function clearBaseTime(){
-  document.getElementById('baseTime').value = '';
+  document.getElementById('baseHour').value = '';
+  document.getElementById('baseMin').value = '';
+  document.getElementById('baseSec').value = '';
   renderResults();
 }
 
 function getBaseTimeMs(){
-  const val = document.getElementById('baseTime').value;
-  if(!val) return null;
-  const parts = val.split(':').map(n => parseInt(n, 10));
+  const hEl = document.getElementById('baseHour');
+  const mEl = document.getElementById('baseMin');
+  const sEl = document.getElementById('baseSec');
+  if(hEl.value === '' && mEl.value === '' && sEl.value === '') return null;
+  const h = parseInt(hEl.value || '0', 10);
+  const m = parseInt(mEl.value || '0', 10);
+  const s = parseInt(sEl.value || '0', 10);
   const now = new Date();
-  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parts[0] || 0, parts[1] || 0, parts[2] || 0);
-  return base.getTime();
+  if(timeMode === 'local'){
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, s).getTime();
+  } else {
+    return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), h, m, s);
+  }
 }
 
 function fmtClock(ms){
   const d = new Date(ms);
-  const hh = String(d.getHours()).padStart(2,'0');
-  const mm = String(d.getMinutes()).padStart(2,'0');
-  const ss = String(d.getSeconds()).padStart(2,'0');
-  return `${hh}:${mm}:${ss}`;
+  const hh = String(timeMode === 'local' ? d.getHours() : d.getUTCHours()).padStart(2,'0');
+  const mm = String(timeMode === 'local' ? d.getMinutes() : d.getUTCMinutes()).padStart(2,'0');
+  const ss = String(timeMode === 'local' ? d.getSeconds() : d.getUTCSeconds()).padStart(2,'0');
+  const suffix = timeMode === 'utc' ? ' UTC' : '';
+  return `${hh}:${mm}:${ss}${suffix}`;
 }
 
 function getVal(id){ return parseInt(document.getElementById(id).value || '0', 10); }
@@ -524,7 +566,9 @@ function toggleRealtime(){
 renderUnitList();
 addUnit('部隊1', 25);
 document.getElementById('enemySec').addEventListener('input', renderResults);
-document.getElementById('baseTime').addEventListener('input', renderResults);
+document.querySelectorAll('#baseHour,#baseMin,#baseSec').forEach(el => {
+  el.addEventListener('input', renderResults);
+});
 setInterval(renderResults, 1000);
 </script>
 </body>
