@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>差し込み出発タイミング計算ツール</title>
+<title>WOS 差し込みシンクロナイザー</title>
 <style>
   :root{
     --bg:#070b14;
@@ -147,7 +147,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>差し込み出発タイミング計算ツール</h1>
+    <h1>WOS 差し込みシンクロナイザー</h1>
     <p>敵の集結完了を基準に、差し込み部隊を何秒前(または後)に出発させればいいかを計算します。</p>
   </header>
 
@@ -190,6 +190,10 @@
     <b>見方</b>: 出発すべきタイミングを、実際にゲーム画面で見ているカウントダウンと同じ形式で表示します。集結完了前に出発すべき場合は「集結残りXX秒」になった瞬間、集結完了後(=行軍が始まってから)に出発すべき場合は「敵の行軍残りXX秒」になった瞬間が出発タイミングです。後者は同着狙いだと必ず自分の行軍時間と同じ値になります。<br><br>
     <b>注意</b>: 通信ラグや実際の行軍時間の誤差は考慮していません。数秒の余裕を見て運用してください。
   </div>
+
+  <footer style="margin-top:32px;text-align:center;font-size:11.5px;color:var(--muted);letter-spacing:0.06em;">
+    made by <span style="color:var(--accent-bright);">mog</span>
+  </footer>
 </div>
 
 <script>
